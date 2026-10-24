@@ -1,0 +1,38 @@
+# Local databases for the Retail Management System.
+#   docker compose up -d     -> MySQL on 3306 and MongoDB on 27017, both seeded on first start
+#   docker compose down -v   -> stop and delete the data (the seed runs again next time)
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-retail}
+      MYSQL_DATABASE: retail_management_system
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db/mysql_seed.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_PASSWORD:-retail}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_DATABASE: reviews
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./db/mongo_seed.js:/docker-entrypoint-initdb.d/01-seed.js:ro
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql_data:
+  mongo_data:

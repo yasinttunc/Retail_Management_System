@@ -3,7 +3,9 @@ package com.project.ibm.retailmanagementsystem.controller;
 import com.project.ibm.retailmanagementsystem.dto.PlaceOrderRequestDTO;
 import com.project.ibm.retailmanagementsystem.model.Store;
 import com.project.ibm.retailmanagementsystem.repository.StoreRepository;
+import com.project.ibm.retailmanagementsystem.service.OrderException;
 import com.project.ibm.retailmanagementsystem.service.OrderService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/store")
-public class StoreConroller {
+public class StoreController {
 
     @Autowired
     private StoreRepository storeRepository;
@@ -30,15 +32,13 @@ public class StoreConroller {
     }
 
     @PostMapping("/placeOrder")
-    public Map<String,String> placeOrder(@RequestBody PlaceOrderRequestDTO placeOrderRequestDTO) {
-
+    public ResponseEntity<Map<String, String>> placeOrder(@RequestBody PlaceOrderRequestDTO placeOrderRequestDTO) {
         try {
             orderService.saveOrder(placeOrderRequestDTO);
-            return Map.of("message", "Order placed successfully");
-        } catch (Error e) {
-            e.printStackTrace();
-            return Map.of("Error", "" + e);
-
+            return ResponseEntity.ok(Map.of("message", "Order placed successfully"));
+        } catch (OrderException e) {
+            // Previously failures returned HTTP 200 with an "Error" key, so the UI reported success.
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
